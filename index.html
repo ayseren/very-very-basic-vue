@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html style="padding: 15px;">
+	<head>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+		
+		<title>Shopping List App</title>
+
+		<style type="text/css">
+			.strikeout {
+				text-decoration: line-through;
+			}
+			.priority{
+				color: red;
+			}
+			.gray{
+				color: gray;
+			}
+		</style>
+	</head>
+	<body>
+		<script src="https://unpkg.com/vue@3"></script>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+
+		<!-- <div id="firstEx">
+			<h1>{{header ? header.toUpperCase() : "Welcome"}}</h1>
+			if else direk kullanilmaz ama ternary kullanilabilir
+			<h1>{{header || "Welcome"}}</h1>
+			<input v-model="header">
+		</div> -->
+
+		<div id="shopping-list">
+			<div>
+				<h1>{{header}}</h1>
+
+				<button v-if="editing" @click="doEdit(false)" class="btn btn-danger">CANCEL</button>
+				<button v-else @click="doEdit(true)" class="btn btn-primary">ADD ITEM</button>
+			</div>
+
+			<a v-bind:href="newItem"> Dynamic Link </a>
+			<!-- newItem icerisine yazilan url otomatik a'nin icine de yazilmis oldu. entera vs tiklamadan hrefe tikla-->
+
+			<div v-if="editing" style="margin: 20px;">
+				<input 
+					@keyup.enter="saveItem"
+					type="text" 
+					v-model="newItem" 
+					placeholder="Add an Item">
+				<!-- v-model.lazy yazdigimizda input icerisine yazma bitince newItem degeri doluyor; .number; .trim vs.
+				sadece input icerisinde degil select, checkbox radio vs icin de kullanilabilir-->
+				<!-- vue, js'in yapabildigi eventleri yapabilir: tab, esc, delete, focus, mouseover, right click vs. -->
+				<!-- v-on: yerine @ yazabiliriz -->
+				&nbsp;&nbsp;
+
+				<span>{{characterCount}}</span>
+				&nbsp;
+
+				<label>
+					<input 
+						type="checkbox" 
+						v-model="newItemHighPriority"> 
+					high priority
+				</label>
+				&nbsp;&nbsp;
+
+				<button 
+					v-bind:disabled="newItem.length < 5" 
+					v-on:click="saveItem" 
+					class="btn btn-primary">
+					SAVE ITEM
+				</button>
+			</div>
+
+			<p v-if="items.length === 0">Nice! You bought all items!</p>
+
+			<ul>
+				<li v-for="item in reversedItems" 
+					@click="togglePurchased(item)"
+					:key="item.id"
+					:class="[item.purchased ? 'strikeout gray' : '',
+					item.highPriority ? 'priority' : '']">
+					<!-- diger yazilma sekli:
+						{strikeout: item.purchased, priority: item.highPriority} -->
+					{{item.label}}
+				</li>
+			</ul>
+			<br>
+			<br>
+
+			<strong style="padding-right: 5px;">Priority</strong>
+			<label><input type="radio" v-model="newItemPriority" value="high">High</label>
+			<label><input type="radio" v-model="newItemPriority" value="low">Low</label>
+			 | {{newItemPriority}}
+			<!-- ayni seyi kucuk farkliliklarla select-option icin de yapabiliriz -->
+			<br>
+			<br>
+
+			<label><input v-model="iceCreamFlavors" type="checkbox" value="vanilla">Vanilla</label>
+			<label><input v-model="iceCreamFlavors" type="checkbox" value="chocolate">Chocolate</label>
+			<label><input v-model="iceCreamFlavors" type="checkbox" value="strawberry">Strawberry</label>
+			<label><input v-model="iceCreamFlavors" type="checkbox" value="cookies-and-cream">Cookies and Cream</label>
+			<br>
+			<br>
+
+		</div>
+
+		<script type="text/javascript">
+			// const firstEx = Vue.createApp({
+			// 	data(){
+			// 		return{
+			// 			header: "Vue is ready to party!"
+			// 			//konsola firstEx.header = "blah blah" yazip header degistirebilir.
+			// 			//konsola $vm.data.header yazarak da degistirilebilir
+			// 		}
+			// 	}
+			// })
+			// .mount('#firstEx')
+
+			const shoppingList = Vue.createApp({
+				data(){
+					return{
+						header: "Shopping List App",
+						items:[
+							{id:1, label:"10 party hats", purchased: true, highPriority:false},
+							{id:2, label:"2 board games", purchased:true, highPriority:false},
+							{id:3, label:"20 cups", purchased:false, highPriority:true}
+						],
+						//html kismi :
+						//<li v-for="(item, index) in items" :key="item.id">{{index+1}} - {{item.label}}</li>
+						//konsola shoppingList.items.push diyerek yeni id ve label eklenebilir
+						//pop ile de sonuncu cikarilabilir
+						//push ile eklerken elle deger girmek yerine $vm.data.newItem yazarak da labeli doldurabiliriz 
+						//(newItem inputuna yazilan deger asagida gozukecek yani)
+						newItem: '',
+						newItemPriority: 'low',
+						newItemHighPriority: false,
+						iceCreamFlavors: [],
+						//konsolda vue sekmesine gittigimizde checkboxtan bir sey secince iceCreamFlavors arrayinin icine geliyor
+						editing:false
+					}
+				},
+				computed:{
+					characterCount(){
+						return this.newItem.length
+					},
+					reversedItems(){
+						return this.items.reverse()
+					}
+				},
+				methods:{
+					doEdit(editing){
+						this.editing = editing
+						this.newItem = ""
+						this.newItemHighPriority = false
+					},
+					//saveItem yaparken her yere nasil saveItem yapacagini yazmak yerine fonksiyonu cagirmak mantikli. 
+					//onceden fonksiyonun icindeki this olmadan yazilmisti
+					saveItem(){
+						this.items.push({id:this.items.length+1, label:this.newItem,
+							highPriority: this.newItemHighPriority})
+						this.newItem = ""
+						this.newItemHighPriority = false
+					},
+					togglePurchased(item){
+						item.purchased = !item.purchased
+					}
+				}
+			})
+			.mount('#shopping-list')
+		</script>
+	</body>
+</html>
